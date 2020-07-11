@@ -7,7 +7,6 @@ use rppal::system::DeviceInfo;
 
 use std::sync::{Arc, Mutex};
 
-
 //https://docs.golemparts.com/rppal/0.11.2/rppal/gpio/struct.OutputPin.html#note
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -23,7 +22,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         *closed_handler.lock().unwrap() = true;
     })?;
 
-
     while !*closed.lock().unwrap() {
         pin.set_high();
         thread::sleep(Duration::from_millis(500));
@@ -34,21 +32,15 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("setting to low");
     pin.set_low();
     Ok(())
-
 }
-
 
 mod tests {
 
     #[test]
-    fn test(){
-        let a = ( 18) / 10 ;
-        println!("{}", a);
-
-        let b = 0x34 / std::mem::size_of::<u32>();
-        println!("{}", b);
-
-
+    fn test() {
+        {
+            let a = 1;
+            // some computations
+        } // a get dropped here
     }
-
 }
