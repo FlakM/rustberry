@@ -22,6 +22,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         *closed_handler.lock().unwrap() = true;
     })?;
 
+
     while !*closed.lock().unwrap() {
         pin.set_high();
         thread::sleep(Duration::from_millis(500));

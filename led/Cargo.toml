@@ -1,5 +1,5 @@
 [package]
-name = "rusty_led"
+name = "led"
 version = "0.1.0"
 authors = ["FlakM <maciej.jan.flak@gmail.com>"]
 edition = "2018"
