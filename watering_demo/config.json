@@ -1,0 +1,22 @@
+{
+    "plants": [
+        {
+            "name": "bazylia i pietruszka",
+            "analog_channel": 0,
+            "pump_gpio": 18,
+            "sensor_params" : {
+                "min": 50,
+                "max": 350
+            }
+        },
+        {
+            "name": "mięta i kolendra",
+            "analog_channel": 7,
+            "pump_gpio": 16,
+            "sensor_params" : {
+                "min": 50,
+                "max": 350
+            }
+        }
+    ]
+}
