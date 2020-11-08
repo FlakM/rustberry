@@ -1,22 +1,36 @@
 {
+    "water_level_sensor": {
+        "analog_channel": 2,
+        "water_reading": 620,
+        "just_a_tip_reading": 470,
+        "air_reading": 0 
+    },
     "plants": [
         {
+            "id": "1",
             "name": "bazylia i pietruszka",
             "analog_channel": 0,
+            "water_for_seconds": 10,
             "pump_gpio": 18,
             "sensor_params" : {
-                "min": 50,
-                "max": 350
-            }
+                "water_reading": 574,
+                "air_reading": 870
+            },
+            "requires_watering_level": 80
         },
         {
-            "name": "mięta i kolendra",
+            "id":"2",
+            "name": "mięta",
             "analog_channel": 7,
-            "pump_gpio": 16,
+            "water_for_seconds": 10,
+
+            "pump_gpio": 26,
             "sensor_params" : {
-                "min": 50,
-                "max": 350
-            }
+                "water_reading": 563,
+                "air_reading": 878
+            },
+            "requires_watering_level": 85
         }
     ]
 }
+

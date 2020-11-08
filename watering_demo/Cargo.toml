@@ -6,8 +6,8 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[[example]]
-name = "measure"
+# [[example]]
+# name = "measure"
 
 
 [lib]
@@ -26,3 +26,16 @@ mcp3008 = "1.0.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
+clap = "3.0.0-beta.2"
+
+
+
+
+async-std = { version = "1.6.5", features = [ "attributes" ] }
+anyhow = "1.0"
+sqlx = { version = "0.4.0-beta.1", default-features = true, features = [ "runtime-async-std", "postgres", "chrono", "bigdecimal" ] }
+openssl = { version = "0.10", features = ["vendored"] }
+
+
+chrono = "0.4.19"
+# openssl = "0.10"
