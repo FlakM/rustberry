@@ -17,8 +17,10 @@ ADD src src
 ADD Cargo.lock .
 ADD Cargo.toml .
 
-
+# VOLUME [ "/bins" ]
 
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
 	--mount=type=cache,target=/home/root/app/target \
-    DATABASE_URL="$database_url" cargo build --target arm-unknown-linux-gnueabihf --release
+    DATABASE_URL="$database_url" cargo build --target arm-unknown-linux-gnueabihf --release && \
+    mkdir /bins/ && \
+    cp -a target/arm-unknown-linux-gnueabihf/release/rustberry /bins/

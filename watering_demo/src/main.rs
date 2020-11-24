@@ -32,38 +32,43 @@ enum SubCommand {
 /// A subcommand for checking water levels
 #[derive(Clap)]
 struct CheckLevels {
-    /// Print information to std out
-    #[clap(short)]
-    debug: bool,
+
 }
 
 /// A subcommand for watering plants
 #[derive(Clap)]
 struct WaterPlants {}
 
-fn settings_from_json(path_to_config: &str) -> anyhow::Result<Setup> {
-    let content = std::fs::read_to_string(path_to_config)?;
-    let setup = Setup::from_str(&content)?;
-    Ok(setup)
-}
-
 fn read_plants_state(setup: Setup) -> anyhow::Result<PlantsState> {
     let mut mcp3008 = Mcp3008::new("/dev/spidev0.0").unwrap();
+
+    let mut sensor_pin = Gpio::new()?.get(setup.sensor_power_pin)?.into_output();
+
+    sensor_pin.set_high();
+    sleep(Duration::from_secs(1));
 
     let plants_state: Vec<(Plant, SoilHumidityReading)> = setup
         .plants
         .into_iter()
         .map(|plant| {
-            let reading = mcp3008.read_adc(plant.analog_channel).unwrap();
-            let result: f64 = calculate_percentage(reading, &plant.sensor_params);
+            let result: f64 = calculate_percentage(
+                mcp3008.read_adc(plant.analog_channel).unwrap(),
+                &plant.sensor_params,
+            );
             (plant, SoilHumidityReading { humidity: result })
         })
         .collect();
 
+    let water_lever_reading = mcp3008
+        .read_adc(setup.water_level_sensor.analog_channel)
+        .unwrap();
+
+    sensor_pin.set_low();
+
     Ok(PlantsState {
         plants: plants_state,
         // todo implement this when the sensor is under water protected by epoxy resin
-        water_container_reading: WaterLevelReading::NotComplete,
+        water_container_reading: calculate_water_level(water_lever_reading),
     })
 }
 
@@ -78,38 +83,46 @@ async fn main() -> anyhow::Result<()> {
         .await?;
 
     match opts.subcmd {
-        SubCommand::WaterPlants(cmd) => {
+        SubCommand::WaterPlants(_cmd) => {
             let setup = settings_from_json(&opts.config_path)?;
             let state = read_plants_state(setup)?;
 
             match state.water_container_reading {
                 WaterLevelReading::CompleteUnderWater => (),
-                WaterLevelReading::NotComplete => eprintln!("Water container might require refill"),
                 _ => return Err(anyhow::anyhow!("Refill water container")),
             };
 
             for (plant, reading) in state.plants {
-                if reading.humidity < plant.requires_watering_level {
+                let is_dry = reading.humidity < plant.watering_params.requires_watering_level;
+                let is_time_to_water = plant.watering_params.should_be_watered();
+
+                if is_dry && is_time_to_water {
                     println!("i will water plant");
-                    let mut pump_pin = Gpio::new()?.get(plant.pump_gpio)?.into_output();
+                    let mut pump_pin = Gpio::new()?
+                        .get(plant.watering_params.pump_gpio)?
+                        .into_output();
                     pump_pin.reset_on_drop();
                     pump_pin.set_high();
-                    sleep(Duration::from_secs(plant.water_for_seconds));
+                    sleep(Duration::from_secs(plant.watering_params.water_for_seconds));
                     pump_pin.is_set_low();
                     sqlx::query!(
                         "insert into water_history (time, sensor,duration_seconds) values ( now(), $1, $2 )",
                         plant.id,
-                        BigDecimal::from(plant.water_for_seconds)
+                        BigDecimal::from(plant.watering_params.water_for_seconds)
                     )
                     .execute(&pool).await?;
                 }
-
             }
             todo!();
         }
-        SubCommand::CheckLevels(cmd) => {
+        SubCommand::CheckLevels(_cmd) => {
             let setup = settings_from_json(&opts.config_path)?;
             let state = read_plants_state(setup)?;
+
+            println!(
+                "Water level in the tank {:?}",
+                state.water_container_reading
+            );
 
             for (plant, reading) in state.plants.iter() {
                 let result_decimal = BigDecimal::from(reading.humidity);
@@ -126,8 +139,6 @@ async fn main() -> anyhow::Result<()> {
                     plant.name, reading.humidity, id
                 );
             }
-
-         
         }
     }
 
