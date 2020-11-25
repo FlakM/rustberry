@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
+
 use std::fmt;
 use chrono::NaiveTime;
 
@@ -14,6 +15,7 @@ pub struct SoilSensorParams {
     pub water_reading: u16,
     pub air_reading: u16,
 }
+
 
 
 

@@ -15,6 +15,5 @@ Każdy z mini projektów został dokładniej opisany we wpisie na [blogu](https:
 1. **Dioda led** `./led/` opisana https://flakm.github.io/posts/rustyled/
 2. **Ekran LCD** `./lcd/` opisany w https://flakm.github.io/posts/rustylcd/
 3. **DHT11 czujnik wilgotności i temperatury** `./dht11/` opisany w https://flakm.github.io/posts/rustydht11/
-
-## Dodawanie nowego projektu
-
+4. **Automatyka do podlewania roślin** `./watering/sensors/`
+5. **Serwer tide udostępniający dane na temat roślin** `./watering/server/`

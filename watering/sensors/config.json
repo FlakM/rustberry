@@ -29,7 +29,6 @@
                 "water_reading": 660,
                 "air_reading": 1000
             },
-
             "watering_params": {
                 "pump_gpio": 26,
                 "water_for_seconds": 10,
