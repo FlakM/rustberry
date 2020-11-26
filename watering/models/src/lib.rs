@@ -19,6 +19,8 @@ pub struct SoilSensorParams {
 
 
 
+
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct WateringParams {
     /// how long a plant should be watered

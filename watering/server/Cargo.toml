@@ -15,10 +15,13 @@ tide = "0.15.0"
 async-std = { version = "1.6.0", features = ["attributes"] }
 
 
-sqlx = { version = "0.4.1", features = [ "runtime-async-std-native-tls", "postgres" ] }
+sqlx = { version = "0.4.1", features = [ "runtime-async-std-native-tls", "postgres", "chrono", "bigdecimal" ] }
 
 chrono = {version = "0.4.19", features=["serde"] }
 tide-sqlx = "0.2.5"
 
 
 anyhow = "1.0.34"
+tide-tracing = "0.0.7"
+tracing = "0.1.22"
+tracing-subscriber = "0.2.15"
