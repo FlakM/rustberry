@@ -24,7 +24,6 @@
             "id":"2",
             "name": "mięta",
             "analog_channel": 7,
-
             "sensor_params" : {
                 "water_reading": 660,
                 "air_reading": 1000

@@ -24,13 +24,13 @@ pub struct SoilSensorParams {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct WateringParams {
     /// how long a plant should be watered
-    pub water_for_seconds: u64,
+    pub water_for_seconds: i32,
     /// time of the day from which plant shpild be watered
     pub water_start_time: NaiveTime, 
     /// end time og the day from which plant should be watered
     pub water_end_time: NaiveTime, 
     /// percentage of soil level that requires watering
-    pub requires_watering_level: f64,
+    pub requires_watering_level: f32,
     /// number of pin that starts pump
     pub pump_gpio: u8,
 }
@@ -61,8 +61,15 @@ mod tests {
     fn test_parsing_default_json() -> anyhow::Result<()> {
         let setup: Setup = settings_from_json("./config.json").unwrap();
         let first: &Plant = setup.plants.get(0).unwrap();
+
+        assert_eq!(first.watering_params.pump_gpio, 18);
         let from_time=first.watering_params.water_start_time;
         assert_eq!(from_time, NaiveTime::from_hms(8, 0, 0));
+
+
+        let last: &Plant = setup.plants.get(1).unwrap();
+        assert_eq!(last.watering_params.pump_gpio, 26);
+
         Ok(())
     }
 
@@ -117,7 +124,7 @@ pub struct Setup {
     pub plants: Vec<Plant>
 }
 
-pub struct SoilHumidityReading{pub humidity: f64}
+pub struct SoilHumidityReading{pub humidity: f32}
 
 
 pub struct PlantsState {
@@ -156,17 +163,17 @@ pub fn calculate_water_level(level: u16) -> WaterLevelReading {
 }
 
 
-pub fn calculate_percentage(sensor_value: u16, sensor_calibration: &SoilSensorParams) -> f64 {
+pub fn calculate_percentage(sensor_value: u16, sensor_calibration: &SoilSensorParams) -> f32 {
     let min = sensor_calibration.water_reading;
     let max = sensor_calibration.air_reading;
 
 
     if sensor_value < sensor_calibration.water_reading {
-        100_f64
+        100_f32
     } else if sensor_value > sensor_calibration.air_reading {
-        0_f64
+        0_f32
     } else {
-        let calibrated: f64 = (((sensor_value - min) * 100) / (max - min)).into();
-        100_f64 - calibrated
+        let calibrated: f32 = (((sensor_value - min) * 100) / (max - min)).into();
+        100_f32 - calibrated
     }
 }

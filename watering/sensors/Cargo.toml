@@ -1,5 +1,5 @@
 [package]
-name = "watering_demo"
+name = "rustberry"
 version = "0.1.0"
 authors = ["FlakM <maciej.jan.flak@gmail.com>"]
 edition = "2018"
@@ -9,14 +9,17 @@ edition = "2018"
 # [[example]]
 # name = "measure"
 
-# [[bin]]
-# name = "rustberry"
-# path = "src/main.rs"
+[[bin]]
+name = "rustberry"
+path = "src/main.rs"
+
+[lib]
+name = "models"
+path = "src/lib.rs"
 
 
 [dependencies]
 
-models = {path = "../models"}
 
 rppal = "0.11.3"
 mcp3008 = "1.0.0"
@@ -24,7 +27,14 @@ mcp3008 = "1.0.0"
 clap = "3.0.0-beta.2"
 
 async-std = { version = "1.6.5", features = [ "attributes" ] }
-sqlx = { version = "0.4.0-beta.1", default-features = true, features = [ "runtime-async-std", "postgres", "chrono", "bigdecimal" ] }
+sqlx = { version = "0.4.0-beta.1", default-features = true, features = [ "runtime-async-std", "postgres", "chrono" ] }
 openssl = { version = "0.10", features = ["vendored"] }
 
 anyhow = "1.0"
+
+
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+
+chrono = {version = "0.4.19", features=["serde"] }

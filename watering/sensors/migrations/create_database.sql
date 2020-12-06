@@ -9,29 +9,16 @@ CREATE TABLE readings(
   time timestamptz primary key,
   sensor text references sensors(id),
   metric text,
-  value integer
+  value real
   );
  
  
  create table water_history(
   	time timestamptz primary key,
     sensor text references sensors(id),
-    duration_seconds integer
+    duration_seconds real
  )
- 
 
-
-
- 
-insert into sensors values ('1', 'bazylia i pietruszka');
-insert into sensors values ('2', 'mięta');
- 
-
-insert into readings (time, sensor, metric, value) values ( now(), '1', 'humidity', 80.0 );
-
-
-select * from readings
-where time > 
 
 
 select * from readings r 
@@ -44,7 +31,7 @@ ALTER table readings
 ALTER COLUMN value TYPE real;
 
 
-ALTER table readings
+ALTER table water_history 
 ALTER COLUMN time TYPE timestamp;
 
 select * from readings r where time > now() - interval '60' day;

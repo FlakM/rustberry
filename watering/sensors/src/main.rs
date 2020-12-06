@@ -1,15 +1,12 @@
 // extern crate openssl;
 
 use clap::Clap;
-use rppal::gpio::Gpio;
 use models::*;
+use rppal::gpio::Gpio;
 use sqlx::postgres::PgPoolOptions;
-use sqlx::types::BigDecimal;
 use std::env;
 use std::thread::sleep;
 use std::time::Duration;
-
-
 
 use mcp3008::Mcp3008;
 
@@ -33,9 +30,7 @@ enum SubCommand {
 
 /// A subcommand for checking water levels
 #[derive(Clap)]
-struct CheckLevels {
-
-}
+struct CheckLevels {}
 
 /// A subcommand for watering plants
 #[derive(Clap)]
@@ -53,7 +48,7 @@ fn read_plants_state(setup: Setup) -> anyhow::Result<PlantsState> {
         .plants
         .into_iter()
         .map(|plant| {
-            let result: f64 = calculate_percentage(
+            let result: f32 = calculate_percentage(
                 mcp3008.read_adc(plant.analog_channel).unwrap(),
                 &plant.sensor_params,
             );
@@ -98,6 +93,14 @@ async fn main() -> anyhow::Result<()> {
                 let is_dry = reading.humidity < plant.watering_params.requires_watering_level;
                 let is_time_to_water = plant.watering_params.should_be_watered();
 
+                sqlx::query!(
+                    "insert into readings (time, sensor, metric, value) values ( now(), $1, 'humidity', $2 )",
+                    plant.id,
+                    reading.humidity
+                )
+                .execute(&pool).await?;
+
+
                 if is_dry && is_time_to_water {
                     println!("i will water plant");
                     let mut pump_pin = Gpio::new()?
@@ -105,21 +108,28 @@ async fn main() -> anyhow::Result<()> {
                         .into_output();
                     pump_pin.reset_on_drop();
                     pump_pin.set_high();
-                    sleep(Duration::from_secs(plant.watering_params.water_for_seconds));
+                    sleep(Duration::from_secs(
+                        plant.watering_params.water_for_seconds as u64,
+                    ));
                     pump_pin.is_set_low();
                     sqlx::query!(
                         "insert into water_history (time, sensor,duration_seconds) values ( now(), $1, $2 )",
                         plant.id,
-                        BigDecimal::from(plant.watering_params.water_for_seconds)
+                        plant.watering_params.water_for_seconds
                     )
                     .execute(&pool).await?;
+                } else {
+                    println!(
+                        "skipping watering plant {} is_dry ({}) -> {} time_to_water -> {}",
+                        plant.name, reading.humidity,is_dry, is_time_to_water
+                    );
                 }
             }
-            todo!();
         }
         SubCommand::CheckLevels(_cmd) => {
             let setup = settings_from_json(&opts.config_path)?;
             let state = read_plants_state(setup)?;
+            println!("read config from path {}", &opts.config_path);
 
             println!(
                 "Water level in the tank {:?}",
@@ -127,12 +137,11 @@ async fn main() -> anyhow::Result<()> {
             );
 
             for (plant, reading) in state.plants.iter() {
-                let result_decimal = BigDecimal::from(reading.humidity);
                 // Insert the task, then obtain the ID of this row
                 let id = sqlx::query!(
                     "insert into readings (time, sensor, metric, value) values ( now(), $1, 'humidity', $2 )",
                     plant.id,
-                    result_decimal
+                    reading.humidity
                 )
                 .execute(&pool).await?;
 

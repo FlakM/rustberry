@@ -1,0 +1,9 @@
+[Unit]
+Description=test
+
+[Timer]
+OnUnitActiveSec=10min
+OnBootSec=1min
+
+[Install]
+WantedBy=water.target
