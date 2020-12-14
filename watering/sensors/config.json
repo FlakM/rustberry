@@ -9,15 +9,15 @@
             "name": "bazylia i pietruszka",
             "analog_channel": 0,
             "sensor_params" : {
-                "water_reading": 638,
-                "air_reading": 1000
+                "water_reading": 592,
+                "air_reading": 830
             },
             "watering_params": {
                 "pump_gpio": 18,
-                "water_for_seconds": 10,
+                "water_for_seconds": 30,
                 "water_start_time": "08:00:00.000",
-                "water_end_time": "10:00:00.000",
-                "requires_watering_level": 80
+                "water_end_time": "10:05:00.000",
+                "requires_watering_level": 75
             }
         },
         {
@@ -25,15 +25,15 @@
             "name": "mięta",
             "analog_channel": 7,
             "sensor_params" : {
-                "water_reading": 660,
-                "air_reading": 1000
+                "water_reading": 613,
+                "air_reading": 840
             },
             "watering_params": {
                 "pump_gpio": 26,
-                "water_for_seconds": 10,
+                "water_for_seconds": 30,
                 "water_start_time": "08:00:00.000",
-                "water_end_time": "10:00:00.000",
-                "requires_watering_level": 85
+                "water_end_time": "10:05:00.000",
+                "requires_watering_level": 80
             }
         }
     ]

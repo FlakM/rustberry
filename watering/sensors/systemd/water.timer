@@ -1,9 +1,11 @@
 [Unit]
 Description=test
+Requires=water.service
 
 [Timer]
+Unit=water.service
 OnUnitActiveSec=10min
 OnBootSec=1min
 
 [Install]
-WantedBy=water.target
+WantedBy=timers.target

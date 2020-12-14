@@ -3,17 +3,22 @@ extern crate log;
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
 use anyhow::Result;
 use dotenv::dotenv;
-use serde::{Deserialize, Serialize};
+use actix_cors::Cors;
+
 use sqlx::PgPool;
 use sqlx::{postgres::PgPoolOptions, Postgres};
 use std::env;
 
+
 use actix_web::middleware::Logger;
 use env_logger::Env;
 
+
+use serde::{Deserialize, Serialize};
+
 // todo implement Responder  according to https://actix.rs/docs/handlers/
 #[derive(Serialize, Deserialize, Debug, sqlx::FromRow)]
-struct ReadingDb {
+pub struct ReadingDb {
     time: chrono::NaiveDateTime,
     sensor: String,
     metric: String,
@@ -22,21 +27,21 @@ struct ReadingDb {
 
 #[derive(Serialize, Deserialize, Debug, sqlx::FromRow)]
 //insert into water_history (time, sensor,duration_seconds) values ( now(), $1, $2 )
-struct WateringTimeRecordings {
+pub struct WateringTimeRecordings {
     time: chrono::NaiveDateTime,
     sensor: String,
     duration_seconds: i32,
 }
 
 #[derive(Deserialize)]
-struct Info {
+pub struct Info {
     // todo rename fields and make them longs?
     pub start: Option<String>,
     pub finish: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct WateringDashboard {
+pub struct WateringDashboard {
     pub from: chrono::NaiveDateTime,
     pub to: chrono::NaiveDateTime,
     pub sensor_readings: Vec<ReadingDb>,
@@ -109,13 +114,18 @@ async fn main() -> Result<()> {
 
     // todo add error handler
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin("http://127.0.0.1:8080")
+            .allowed_origin("http://127.0.0.1:8081");
+
         App::new()
+            .wrap(cors)
             .wrap(Logger::default())
             .wrap(Logger::new("%a %{User-Agent}i"))
             .data(pool.clone()) // pass database pool to application so we can access it inside handlers
             .service(index)
     })
-    .bind("127.0.0.1:8080")?
+    .bind("127.0.0.1:8081")?
     .run()
     .await?;
     Ok(())
