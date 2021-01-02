@@ -6,20 +6,26 @@ create table sensors (
 
 
 CREATE TABLE readings(
-  time timestamptz primary key,
+  time timestamp primary key,
   sensor text references sensors(id),
   metric text,
   value real
   );
  
  
+ select * from readings
+ 
  create table water_history(
-  	time timestamptz primary key,
+  	time timestamp primary key,
     sensor text references sensors(id),
     duration_seconds real
  )
 
+ 
 
+select * from readings r join sensors s on s.id  = r.sensor;
+
+select * from water_history h join sensors s on s.id  = h.sensor;
 
 select * from readings r 
 where sensor = '2'
@@ -41,3 +47,10 @@ delete from readings ;
 
 drop table sensors;
 drop table readings ;
+
+
+INSERT INTO public.sensors (id,"name") VALUES ('1','bazylia i pietruszka'), ('2','mięta');
+
+
+
+CREATE USER watering WITH PASSWORD 'Password1';

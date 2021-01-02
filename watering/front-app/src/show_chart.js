@@ -1,7 +1,6 @@
-
 export function load_dashboard(data) {
     var ctx = document.getElementById('myChart').getContext('2d');
-    var timeFormat = 'YYYY-MM-DD HH:mm:ss';
+    var timeFormat = 'YYYY-MM-DD HH:mm:ss ZZ';
 
     var chart = new Chart(ctx, {
         // The type of chart we want to create
@@ -10,10 +9,10 @@ export function load_dashboard(data) {
         // The data for our dataset
         data: {
             datasets: [{
-                label: 'sensor1',
+                label: data.sensor1.name,
                 backgroundColor: 'rgba(255, 0, 0, 0.2)',
                 borderColor: 'rgb(255, 0, 0)',
-                data: data.sensor1_soil_humidity,
+                data: data.sensor1.soil_humidity_readings,
                 type: 'line',
                 pointRadius: 0,
                 fill: false,
@@ -21,17 +20,19 @@ export function load_dashboard(data) {
                 borderWidth: 2
             },
             {
-                label: 'sensor1 watering',
-                backgroundColor: 'rgba(255, 0, 0, 0.5)',
+                label: '💦 ' + data.sensor1.name,
+                backgroundColor: 'rgba(255, 0, 0, 0.2)',
                 borderColor: 'rgb(255, 0, 0)',
-                data: data.sensor1_watering,
+                data: data.sensor1.watering_readings,
+                radius: 5,
+                hoverRadius: 10,
                 type: 'bubble',
             },
             {
-                label: 'sensor2',
+                label: data.sensor2.name,
                 backgroundColor: 'rgba(0, 0, 255, 0.2)',
                 borderColor: 'rgb(0, 0, 255)',
-                data: data.sensor2_soil_humidity,
+                data: data.sensor2.soil_humidity_readings,
                 type: 'line',
                 pointRadius: 0,
                 fill: false,
@@ -39,26 +40,41 @@ export function load_dashboard(data) {
                 borderWidth: 2
             },
             {
-                label: 'sensor2 watering',
-                backgroundColor: 'rgba(0, 0, 255, 0.5)',
+                label: '💦 ' + data.sensor2.name,
+                backgroundColor: 'rgba(0, 0, 255, 0.2)',
                 borderColor: 'rgb(0, 0, 255)',
-                data: data.sensor2_watering,
+                data: data.sensor2.watering_readings,
+                radius: 5,
+                hoverRadius: 10,
                 type: 'bubble',
             }]
         },
 
         // Configuration options go here
         options: {
-            animation: {
-                duration: 0
+            title: {
+                display: true,  
+                text: `Plant state ${moment(data.from).fromNow()} - ${moment(data.to).fromNow()}` ,
+                fontSize: 24,
+                padding: 25
             },
+            responsive: true,
+            legend: {
+                position: 'bottom',
+            },
+            tooltips: {
+                position: 'nearest',
+                mode: 'index',
+                intersect: false,
+            },
+
             scales: {
                 xAxes: [{
                     type: 'time',
                     distribution: 'series',
                     time: {
-                        parser: timeFormat,
-                        //     round: 'minute',
+                        // parser: timeFormat,
+                        round: 'minute',
                         tooltipFormat: 'YYYY-MM-DD ll HH:mm',
                         displayFormats: {
                             'millisecond': 'MMM DD HH:mm',
@@ -70,7 +86,7 @@ export function load_dashboard(data) {
                             'month': 'MMM DD HH:mm',
                             'quarter': 'MMM DD HH:mm',
                             'year': 'MMM DD HH:mm',
-                         },
+                        },
 
                     },
                     offset: true,
@@ -93,6 +109,10 @@ export function load_dashboard(data) {
                 yAxes: [{
                     gridLines: {
                         drawBorder: false
+                    },
+                    ticks: {
+                        suggestedMin: 0,
+                        suggestedMax: 100
                     },
                     scaleLabel: {
                         display: true,

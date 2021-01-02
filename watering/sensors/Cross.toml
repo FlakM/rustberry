@@ -1,0 +1,4 @@
+[build.env]
+passthrough = [
+    "DATABASE_URL"
+]

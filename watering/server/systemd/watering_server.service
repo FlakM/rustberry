@@ -1,0 +1,17 @@
+[Unit]
+Description=rust server service
+ConditionPathExists=/home/pi/server/watering_server
+After=network.target
+
+[Service]
+EnvironmentFile=/home/pi/.water.env
+WorkingDirectory=/home/pi/
+
+Type=simple
+ExecStart=/home/pi/server/watering_server
+
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

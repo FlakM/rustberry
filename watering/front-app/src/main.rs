@@ -1,16 +1,15 @@
 use wasm_bindgen::prelude::*;
 
 use anyhow::Error;
-use serde_derive::{ Serialize,Deserialize};
+use chrono::{DateTime, Local};
+use serde_derive::{Deserialize, Serialize};
 use yew::format::{Json, Nothing};
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
 use yew::{html, Component, ComponentLink, Html, ShouldRender};
 
-
 extern crate wasm_bindgen;
 
 mod bindings;
-
 
 pub enum Msg {
     FetchData,
@@ -18,56 +17,91 @@ pub enum Msg {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Reading{
-    x: String,
-    y: f32
+pub struct PlantData {
+    name: String,
+    soil_humidity_readings: Vec<Reading>,
+    watering_readings: Vec<Reading>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Reading {
+    x: String,
+    y: f32,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct WateringChartData {
-    sensor1_soil_humidity: Vec<Reading>,
-    sensor1_watering: Vec<Reading>,
-    sensor2_soil_humidity: Vec<Reading>,
-    sensor2_watering: Vec<Reading>,
+    from: DateTime<Local>,
+    to: DateTime<Local>,
+    sensor1: PlantData,
+    sensor2: PlantData,
 }
 
 impl WateringChartData {
     fn from_dashboard(dashboard: &common::WateringDashboard) -> anyhow::Result<WateringChartData> {
-        let mut sensor1_soil_humidity: Vec<Reading> = vec!();
-        let mut sensor2_soil_humidity: Vec<Reading> = vec!();
+        let mut sensor1_name: Option<String> = None;
+        let mut sensor2_name = None;
+
+        let mut sensor1_soil_humidity: Vec<Reading> = vec![];
+        let mut sensor2_soil_humidity: Vec<Reading> = vec![];
         for reading in &dashboard.sensor_readings {
             match &reading.sensor[..] {
-                "1" => sensor1_soil_humidity.push(Reading{x: reading.time.format("%Y-%m-%d %H:%M:%S").to_string(), y: reading.value}),
-                "2" => sensor2_soil_humidity.push(Reading{x: reading.time.format("%Y-%m-%d %H:%M:%S").to_string(), y: reading.value}),
+                "1" => {
+                    if let None = sensor1_name {
+                        sensor1_name = Some(reading.name.clone());
+                    }
+                    sensor1_soil_humidity.push(Reading {
+                        x: reading.time.to_rfc3339(),
+                        y: reading.value,
+                    })
+                }
+                "2" => {
+                    if let None = sensor2_name {
+                        sensor2_name = Some(reading.name.clone());
+                    }
+                    sensor2_soil_humidity.push(Reading {
+                        x: reading.time.to_rfc3339(),
+                        y: reading.value,
+                    })
+                }
                 _ => (),
             }
         }
-        
 
-        let mut sensor1_watering: Vec<Reading> = vec!();
-        let mut sensor2_watering: Vec<Reading> = vec!();
+        let mut sensor1_watering: Vec<Reading> = vec![];
+        let mut sensor2_watering: Vec<Reading> = vec![];
         for reading in &dashboard.waterings {
             match &reading.sensor[..] {
-                "1" => sensor1_watering.push(Reading{x: reading.time.format("%Y-%m-%d %H:%M:%S").to_string(), y: reading.duration_seconds as f32}),
-                "2" => sensor2_watering.push(Reading{x: reading.time.format("%Y-%m-%d %H:%M:%S").to_string(), y: reading.duration_seconds as f32}),
+                "1" => sensor1_watering.push(Reading {
+                    x: reading.time.to_rfc3339(),
+                    y: reading.duration_seconds as f32,
+                }),
+                "2" => sensor2_watering.push(Reading {
+                    x: reading.time.to_rfc3339(),
+                    y: reading.duration_seconds as f32,
+                }),
                 _ => (),
             }
         }
 
-        let mut chart = WateringChartData::default();
-        chart.sensor1_soil_humidity = sensor1_soil_humidity;
-        chart.sensor2_soil_humidity = sensor2_soil_humidity;
-        chart.sensor1_watering = sensor1_watering;
-        chart.sensor2_watering = sensor2_watering;
-        Ok(
-            chart
-        )
+        Ok(WateringChartData {
+            from: dashboard.from,
+            to: dashboard.to,
+            sensor1: PlantData {
+                name: sensor1_name.unwrap(),
+                soil_humidity_readings: sensor1_soil_humidity,
+                watering_readings: sensor1_watering,
+            },
+            sensor2: PlantData {
+                name: sensor2_name.unwrap(),
+                soil_humidity_readings: sensor2_soil_humidity,
+                watering_readings: sensor2_watering,
+            },
+        })
     }
 }
 
-
 pub struct Model {
-
     fetching: bool,
     data: Option<common::WateringDashboard>,
     ft: Option<FetchTask>,
@@ -75,16 +109,13 @@ pub struct Model {
     link: ComponentLink<Model>,
 }
 
-
 impl Model {
     fn view_data(&self) -> Html {
         if let Some(value) = &self.data {
             let data = WateringChartData::from_dashboard(value).unwrap();
             bindings::load_dashboard(JsValue::from_serde(&data).unwrap());
-
-            let range = format!("{} - {}", value.from.format("%Y-%m-%d %H:%M:%S"), value.to.format("%Y-%m-%d %H:%M:%S"));
             html! {
-                <p>{range}</p>
+                <p></p>
             }
         } else {
             html! {
@@ -100,28 +131,27 @@ impl Model {
                 println!("META: {:?}, {:?}", meta, data);
                 if meta.status.is_success() {
                     log::info!("fetch ready {:?}", data);
-                    vec!(Msg::FetchReady(data))
+                    vec![Msg::FetchReady(data)]
                 } else {
                     log::info!("fetch failed");
-                    vec!() // FIXME: Handle this error accordingly..
+                    vec![] // FIXME: Handle this error accordingly..
                 }
             },
         );
 
-
-        let request = Request::get("http://127.0.0.1:8081/sensors/readings").body(Nothing).unwrap();
+        // let url = "/sensors/readings";
+        // todo if trunk serve is running i should set it to this value
+        let url = "http://192.168.0.100:8080/sensors/readings";
+        let request = Request::get(url).body(Nothing).unwrap();
         FetchService::fetch(request, callback).unwrap()
     }
-
 }
 
 impl Component for Model {
     type Message = Msg;
     type Properties = ();
 
-
     fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
-    
         let mut s = Self {
             fetching: false,
             data: None,
@@ -140,14 +170,12 @@ impl Component for Model {
                 let task = self.fetch_json();
                 self.ft = Some(task);
                 true
-            },
+            }
             Msg::FetchReady(response) => {
                 self.fetching = false;
                 self.data = response.map(|data| data).ok();
                 true
-            },
-
-
+            }
         }
     }
 
@@ -158,15 +186,14 @@ impl Component for Model {
     fn view(&self) -> Html {
         html! {
             <>
-                <button onclick=self.link.callback(|_| Msg::FetchData)>
-                    { "Fetch Data" }
-                </button>
-
                 { self.view_data() }
 
-                <div style="width:75%;">
+                <div style="width:100%;">
                     <canvas id="myChart"></canvas>
                 </div>
+                <button onclick=self.link.callback(|_| Msg::FetchData)>
+                { "Refresh data" }
+                </button>
             </>
         }
     }

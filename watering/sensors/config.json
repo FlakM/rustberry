@@ -14,7 +14,7 @@
             },
             "watering_params": {
                 "pump_gpio": 18,
-                "water_for_seconds": 30,
+                "water_for_seconds": 35,
                 "water_start_time": "08:00:00.000",
                 "water_end_time": "10:05:00.000",
                 "requires_watering_level": 75
@@ -30,7 +30,7 @@
             },
             "watering_params": {
                 "pump_gpio": 26,
-                "water_for_seconds": 30,
+                "water_for_seconds": 35,
                 "water_start_time": "08:00:00.000",
                 "water_end_time": "10:05:00.000",
                 "requires_watering_level": 80

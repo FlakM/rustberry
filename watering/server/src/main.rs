@@ -1,36 +1,37 @@
 extern crate log;
 
+use actix_cors::Cors;
+use actix_files as fs;
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
 use anyhow::Result;
+use chrono::{DateTime, Local, NaiveDateTime, Utc};
 use dotenv::dotenv;
-use actix_cors::Cors;
-
 use sqlx::PgPool;
 use sqlx::{postgres::PgPoolOptions, Postgres};
 use std::env;
 
-
 use actix_web::middleware::Logger;
 use env_logger::Env;
-
 
 use serde::{Deserialize, Serialize};
 
 // todo implement Responder  according to https://actix.rs/docs/handlers/
 #[derive(Serialize, Deserialize, Debug, sqlx::FromRow)]
 pub struct ReadingDb {
-    time: chrono::NaiveDateTime,
+    time: chrono::DateTime<chrono::offset::Local>,
     sensor: String,
     metric: String,
     value: f32,
+    name: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, sqlx::FromRow)]
 //insert into water_history (time, sensor,duration_seconds) values ( now(), $1, $2 )
 pub struct WateringTimeRecordings {
-    time: chrono::NaiveDateTime,
+    time: chrono::DateTime<chrono::offset::Local>,
     sensor: String,
     duration_seconds: i32,
+    name: String,
 }
 
 #[derive(Deserialize)]
@@ -42,39 +43,51 @@ pub struct Info {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct WateringDashboard {
-    pub from: chrono::NaiveDateTime,
-    pub to: chrono::NaiveDateTime,
+    pub from: chrono::DateTime<chrono::offset::Local>,
+    pub to: chrono::DateTime<chrono::offset::Local>,
     pub sensor_readings: Vec<ReadingDb>,
     pub waterings: Vec<WateringTimeRecordings>,
 }
 
 async fn get_dashboard(conn: &sqlx::Pool<Postgres>, info: &Info) -> Result<WateringDashboard> {
-    let now = chrono::offset::Local::now().naive_local();
+    let now = chrono::offset::Local::now();
     // todo add validation that start_date < finish_date
     let start_date = info
         .start
         .as_ref()
-        .map(|d| chrono::NaiveDateTime::from_timestamp(d.parse::<i64>().unwrap(), 0_u32))
+        .map(|d| {
+            let timestamp = d.parse::<i64>().unwrap();
+            let naive = NaiveDateTime::from_timestamp(timestamp, 0);
+            let utc = DateTime::<chrono::Utc>::from_utc(naive, Utc);
+            let local: DateTime<Local> = DateTime::from(utc);
+            local
+        })
         .unwrap_or(now - chrono::Duration::days(5));
 
     let finish_date = info
         .finish
         .as_ref()
-        .map(|d| chrono::NaiveDateTime::from_timestamp(d.parse::<i64>().unwrap(), 0_u32))
+        .map(|d| {
+            let timestamp = d.parse::<i64>().unwrap();
+            let naive = NaiveDateTime::from_timestamp(timestamp, 0);
+            let utc = DateTime::<chrono::Utc>::from_utc(naive, Utc);
+            let local: DateTime<Local> = DateTime::from(utc);
+            local
+        })
         .unwrap_or(now);
     if start_date >= finish_date {
         return Err(anyhow::anyhow!("start_date cannot be > then finish_date"));
     }
 
     let readings: Vec<ReadingDb> =
-        sqlx::query_as::<_, ReadingDb>("select * from readings where time > $1 and time < $2")
+        sqlx::query_as::<_, ReadingDb>("select * from readings r join sensors s on s.id  = r.sensor where r.time > $1 and r.time < $2")
             .bind(start_date)
             .bind(finish_date)
             .fetch_all(&*conn)
             .await?;
 
     let waterings: Vec<WateringTimeRecordings> = sqlx::query_as::<_, WateringTimeRecordings>(
-        "select * from water_history where time > $1 and time < $2",
+        "select * from water_history h join sensors s on s.id  = h  .sensor where time > $1 and time < $2",
     )
     .bind(start_date)
     .bind(finish_date)
@@ -101,6 +114,14 @@ async fn index(db_pool: web::Data<PgPool>, info: web::Query<Info>) -> impl Respo
     }
 }
 
+#[get("/")]
+async fn redirect_to_index() -> HttpResponse {
+    HttpResponse::Found()
+        .header(actix_web::http::header::LOCATION, "/index.html")
+        .finish()
+        .into_body()
+}
+
 #[actix_web::main]
 async fn main() -> Result<()> {
     dotenv().ok();
@@ -116,6 +137,7 @@ async fn main() -> Result<()> {
     HttpServer::new(move || {
         let cors = Cors::default()
             .allowed_origin("http://127.0.0.1:8080")
+            .allowed_origin("http://192.168.0.201:8080")
             .allowed_origin("http://127.0.0.1:8081");
 
         App::new()
@@ -124,8 +146,16 @@ async fn main() -> Result<()> {
             .wrap(Logger::new("%a %{User-Agent}i"))
             .data(pool.clone()) // pass database pool to application so we can access it inside handlers
             .service(index)
+            .default_service(
+                fs::Files::new(
+                    "/",
+                    &env::var("HTML_FILES").expect("ENV HTML_FILES must be set"),
+                )
+                .index_file("index.html")
+                .default_handler(web::to(|| HttpResponse::NotFound().body("File not found"))),
+            )
     })
-    .bind("127.0.0.1:8081")?
+    .bind("0.0.0.0:8080")?
     .run()
     .await?;
     Ok(())

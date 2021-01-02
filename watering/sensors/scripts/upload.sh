@@ -4,7 +4,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR=$(realpath "$SCRIPT_DIR/..")
 
-OUT_DIR="$ROOT_DIR/target/build"
+OUT_DIR="$ROOT_DIR/target/arm-unknown-linux-gnueabihf/release"
 
 
 scp "$OUT_DIR/config.json" pi@192.168.0.100:~/rustberry/config.json

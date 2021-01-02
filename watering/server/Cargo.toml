@@ -11,6 +11,7 @@ edition = "2018"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
+openssl = { version = "0.10", features = ["vendored"] }
 
 sqlx = { version = "0.4.1", features = [ "runtime-async-std-native-tls", "postgres", "chrono", "bigdecimal" ] }
 
@@ -24,5 +25,6 @@ env_logger = "0.7.1"
 log = "0.4.8"
 dotenv = "0.15.0"
 
-common =  {path = "../common"}
+
 actix-cors = "0.5.3"
+actix-files = "0.4.1"
