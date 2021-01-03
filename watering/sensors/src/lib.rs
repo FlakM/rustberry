@@ -17,10 +17,6 @@ pub struct SoilSensorParams {
 }
 
 
-
-
-
-
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct WateringParams {
     /// how long a plant should be watered
@@ -166,7 +162,6 @@ pub fn calculate_water_level(level: u16) -> WaterLevelReading {
 pub fn calculate_percentage(sensor_value: u16, sensor_calibration: &SoilSensorParams) -> f32 {
     let min = sensor_calibration.water_reading;
     let max = sensor_calibration.air_reading;
-
 
     if sensor_value < sensor_calibration.water_reading {
         100_f32
