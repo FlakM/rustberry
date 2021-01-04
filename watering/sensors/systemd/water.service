@@ -7,7 +7,7 @@ EnvironmentFile=/home/pi/.water.env
 WorkingDirectory=/home/pi/
 
 Type=oneshot
-ExecStart=/home/pi/rustberry/rustberry --config-path /home/pi/rustberry/config.json water-plants
+ExecStart=/home/pi/rustberry/rustberry
 
 
 

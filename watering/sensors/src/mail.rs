@@ -1,22 +1,27 @@
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
+use std::env;
 
 use anyhow::Result;
 
-pub fn send_mail(to: &str, smtp_username: &str, smtp_password:&str) -> Result<()> {
+/// sends email using gmails smtp
+/// remember to enable less secure apps https://support.google.com/accounts/answer/6010255
+pub fn send_alert_mail() -> Result<()> {
+    let to = env::var("MAIL_TO")?;
+    let smtp_username = env::var("SMTP_USERNAME")?;
+    let smtp_password = env::var("SMTP_PASSWORD")?;
+
     let email = Message::builder()
-        .from("rustberrypi <rustberrypibot@gmail.com>".parse().unwrap())
-        .reply_to("rustberrypi <rustberrypibot@gmail.com>".parse().unwrap())
-        .to(to.parse().unwrap())
+        .from("rustberrypi <rustberrypibot@gmail.com>".parse()?)
+        .reply_to("rustberrypi <rustberrypibot@gmail.com>".parse()?)
+        .to(to.parse()?)
         .subject("water empty")
-        .body("Be happy!")
-        .unwrap();
+        .body("Be happy!")?;
 
     let creds = Credentials::new(smtp_username.to_string(), smtp_password.to_string());
 
     // Open a remote connection to gmail
-    let mailer = SmtpTransport::relay("smtp.gmail.com")
-        .unwrap()
+    let mailer = SmtpTransport::relay("smtp.gmail.com")?
         .credentials(creds)
         .build();
 
