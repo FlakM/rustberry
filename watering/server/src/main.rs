@@ -1,7 +1,6 @@
 extern crate log;
 
 use actix_cors::Cors;
-use actix_files as fs;
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
 use anyhow::Result;
 use chrono::{DateTime, Local, NaiveDateTime, Utc};
@@ -15,7 +14,8 @@ use env_logger::Env;
 
 use serde::{Deserialize, Serialize};
 
-// todo implement Responder  according to https://actix.rs/docs/handlers/
+mod rest;
+
 #[derive(Serialize, Deserialize, Debug, sqlx::FromRow)]
 pub struct ReadingDb {
     time: chrono::DateTime<chrono::offset::Local>,
@@ -49,7 +49,10 @@ pub struct WateringDashboard {
     pub waterings: Vec<WateringTimeRecordings>,
 }
 
-async fn get_dashboard(conn: &sqlx::Pool<Postgres>, info: &Info) -> Result<WateringDashboard> {
+async fn get_dashboard(
+    conn: &sqlx::Pool<Postgres>,
+    info: &Info,
+) -> Result<rest::WateringChartData> {
     let now = chrono::offset::Local::now();
     // todo add validation that start_date < finish_date
     let start_date = info
@@ -101,7 +104,7 @@ async fn get_dashboard(conn: &sqlx::Pool<Postgres>, info: &Info) -> Result<Water
         waterings: waterings,
     };
 
-    Ok(dashboard)
+    Ok(rest::WateringChartData::from_dashboard(&dashboard)?)
 }
 
 #[get("/sensors/readings")]
@@ -115,11 +118,10 @@ async fn index(db_pool: web::Data<PgPool>, info: web::Query<Info>) -> impl Respo
 }
 
 #[get("/")]
-async fn redirect_to_index() -> HttpResponse {
-    HttpResponse::Found()
-        .header(actix_web::http::header::LOCATION, "/index.html")
-        .finish()
-        .into_body()
+async fn actual_index() -> impl Responder {
+    HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(include_str!("../static/index.html"))
 }
 
 #[actix_web::main]
@@ -137,8 +139,7 @@ async fn main() -> Result<()> {
     HttpServer::new(move || {
         let cors = Cors::default()
             .allowed_origin("http://127.0.0.1:8080")
-            .allowed_origin("http://192.168.0.201:8080")
-            .allowed_origin("http://127.0.0.1:8081");
+            .allowed_origin("http://192.168.0.201:8080");
 
         App::new()
             .wrap(cors)
@@ -146,14 +147,7 @@ async fn main() -> Result<()> {
             .wrap(Logger::new("%a %{User-Agent}i"))
             .data(pool.clone()) // pass database pool to application so we can access it inside handlers
             .service(index)
-            .default_service(
-                fs::Files::new(
-                    "/",
-                    &env::var("HTML_FILES").expect("ENV HTML_FILES must be set"),
-                )
-                .index_file("index.html")
-                .default_handler(web::to(|| HttpResponse::NotFound().body("File not found"))),
-            )
+            .service(actual_index)
     })
     .bind("0.0.0.0:8080")?
     .run()

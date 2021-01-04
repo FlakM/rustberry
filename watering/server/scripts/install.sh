@@ -6,5 +6,5 @@ ssh -qt pi@192.168.0.100 "
     systemctl --user daemon-reload
     systemctl --user enable watering_server.service
     systemctl --user start watering_server.service
-    systemctl --user status watering_server.service
+    systemctl --user is-active watering_server.service
 "
