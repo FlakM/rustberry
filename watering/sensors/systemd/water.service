@@ -10,6 +10,5 @@ Type=oneshot
 ExecStart=/home/pi/rustberry/rustberry
 
 
-
 [Install]
 WantedBy=multi-user.target

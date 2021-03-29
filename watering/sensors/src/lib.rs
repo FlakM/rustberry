@@ -36,8 +36,8 @@ impl WateringParams {
 }
 
 pub fn settings_from_json(path_to_config: &str) -> anyhow::Result<Setup> {
-    let content = std::fs::read_to_string(path_to_config)?;
-    let setup = Setup::from_str(&content)?;
+    let file_content = std::fs::read_to_string(path_to_config)?;
+    let setup = Setup::from_str(&file_content)?;
     Ok(setup)
 }
 
@@ -137,7 +137,7 @@ pub enum WaterLevelReading {
     CompleteUnderWater,
 }
 
-const WATER_SENSOR_AIR_READING: u16 = 50;
+const WATER_SENSOR_AIR_READING: u16 = 500;
 
 pub fn calculate_water_level(level: u16) -> WaterLevelReading {
     if level < WATER_SENSOR_AIR_READING {

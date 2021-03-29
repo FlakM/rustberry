@@ -1,6 +1,7 @@
 [Unit]
 Description=test
 Requires=water.service
+After=network.target postgresql.target
 
 [Timer]
 Unit=water.service

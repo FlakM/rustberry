@@ -4,7 +4,6 @@ use actix_cors::Cors;
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
 use anyhow::Result;
 use chrono::{DateTime, Local, NaiveDateTime, Utc};
-use dotenv::dotenv;
 use sqlx::PgPool;
 use sqlx::{postgres::PgPoolOptions, Postgres};
 use std::env;
@@ -26,7 +25,6 @@ pub struct ReadingDb {
 }
 
 #[derive(Serialize, Deserialize, Debug, sqlx::FromRow)]
-//insert into water_history (time, sensor,duration_seconds) values ( now(), $1, $2 )
 pub struct WateringTimeRecordings {
     time: chrono::DateTime<chrono::offset::Local>,
     sensor: String,
@@ -54,7 +52,6 @@ async fn get_dashboard(
     info: &Info,
 ) -> Result<rest::WateringChartData> {
     let now = chrono::offset::Local::now();
-    // todo add validation that start_date < finish_date
     let start_date = info
         .start
         .as_ref()
@@ -126,8 +123,6 @@ async fn actual_index() -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> Result<()> {
-    dotenv().ok();
-
     let pool = PgPoolOptions::new()
         .max_connections(1)
         .connect(&env::var("DATABASE_URL")?)
