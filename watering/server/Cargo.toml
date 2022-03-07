@@ -13,7 +13,7 @@ serde_json = "1.0"
 
 openssl = { version = "0.10", features = ["vendored"] }
 
-sqlx = { version = "0.4.1", features = [ "runtime-async-std-native-tls", "postgres", "chrono", "bigdecimal" ] }
+sqlx = { version = "0.4.1", features = ["runtime-actix-native-tls", "postgres", "chrono", "bigdecimal" ] }
 
 chrono = {version = "0.4.19", features=["serde"] }
 

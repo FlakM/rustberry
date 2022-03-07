@@ -19,7 +19,7 @@ rppal = "0.11.3"
 mcp3008 = "1.0.0"
 
 async-std = { version = "1.6.5", features = [ "attributes" ] }
-sqlx = { version = "0.4.0-beta.1", default-features = true, features = [ "runtime-async-std", "postgres", "chrono" ] }
+sqlx = { version = "0.5", features = [ "runtime-async-std-native-tls", "postgres", "chrono" ] }
 openssl = { version = "0.10", features = ["vendored"] }
 
 anyhow = "1.0"

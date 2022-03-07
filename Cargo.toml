@@ -1,0 +1,10 @@
+[workspace]
+members = [
+    "dht11",
+    "lcd",
+    "led",
+    "mcp3008",
+    "watering/sensors",
+    "watering/sensors",
+    "heaptrace_csv",
+]

@@ -16,7 +16,7 @@ pub fn send_alert_mail() -> Result<()> {
         .reply_to("rustberrypi <rustberrypibot@gmail.com>".parse()?)
         .to(to.parse()?)
         .subject("water empty")
-        .body("Be happy!")?;
+        .body("Be happy!".to_string())?;
 
     let creds = Credentials::new(smtp_username.to_string(), smtp_password.to_string());
 

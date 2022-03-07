@@ -63,11 +63,11 @@ async fn main() -> anyhow::Result<()> {
         let is_dry = reading.humidity < plant.watering_params.requires_watering_level;
         let is_time_to_water = plant.watering_params.should_be_watered();
 
-        sqlx::query!(
+        sqlx::query(
             "insert into readings (time, sensor, metric, value) values ( now(), $1, 'humidity', $2 )",
-            plant.id,
-            reading.humidity
         )
+        .bind(&plant.id)
+        .bind(&reading.humidity)
         .execute(&pool).await?;
 
         println!(
@@ -86,12 +86,11 @@ async fn main() -> anyhow::Result<()> {
                 plant.watering_params.water_for_seconds as u64,
             ));
             pump_pin.set_low();
-            sqlx::query!(
-                        "insert into water_history (time, sensor,duration_seconds) values ( now(), $1, $2 )",
-                        plant.id,
-                        plant.watering_params.water_for_seconds
-                    )
-                    .execute(&pool).await?;
+            sqlx::query(
+                        "insert into water_history (time, sensor,duration_seconds) values ( now(), $1, $2 )")
+            .bind(plant.id)
+            .bind(plant.watering_params.water_for_seconds)
+            .execute(&pool).await?;
         } else {
             println!("skipping watering plant {}", plant.name);
         }
